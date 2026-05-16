@@ -278,13 +278,22 @@
                             </fieldset>
 
                             <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label for="frame-image-path">画像URL (相対パスを直接指定)</label>
+                                    <input type="text" id="frame-image-path"
+                                        placeholder="例: images/frames/test.png">
+                                    <small class="hint">こちらを入力した場合、下のファイル選択より優先されます。</small>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
                                 <div class="form-group full-width border-dashed">
                                     <label for="frame-image" class="file-drop-label">
                                         <span class="upload-icon">📁</span>
                                         <span>透過フレーム(PNG)をアップロード</span>
                                         <small>内側が透明に切り抜かれている必要があります。</small>
                                     </label>
-                                    <input type="file" id="frame-image" accept="image/png" required
+                                    <input type="file" id="frame-image" accept="image/png"
                                         class="hidden-input">
                                     <div id="frame-image-preview-name" class="file-name-preview"></div>
                                 </div>
@@ -321,12 +330,20 @@
                             </div>
                         </div>
                         <div class="form-row">
+                            <div class="form-group full-width">
+                            <label for="mat-image-path">画像URL (相対パスを直接指定)</label>
+                            <input type="text" id="mat-image-path"
+                                placeholder="例: images/mats/canvas.jpg">
+                            <small class="hint">こちらを入力した場合、下のファイル選択より優先されます。</small>
+                            </div>
+                        </div>
+                        <div class="form-row">
                             <div class="form-group full-width border-dashed">
                             <label for="mat-image" class="file-drop-label">
                                 <span class="upload-icon">🖼️</span>
                                 <span>マット画像をアップロード</span>
                             </label>
-                            <input type="file" id="mat-image" accept="image/*" required class="hidden-input">
+                            <input type="file" id="mat-image" accept="image/*" class="hidden-input">
                             </div>
                         </div>
                         <button type="submit" class="primary-btn full-width submit-btn">マットを登録する</button>

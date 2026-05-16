@@ -364,19 +364,24 @@ function setupEventListeners() {
             addMatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('mat-name').value;
-            
-            // ★修正箇所： .files の後ろに  をつけて、選択されたファイル自体を取得します！
+
+            // パス入力欄を優先し、空ならファイル選択を使う
+            const pathInput = document.getElementById('mat-image-path');
+            const pathValue = pathInput ? pathInput.value.trim() : '';
             const fileInput = document.getElementById('mat-image');
-            const file = fileInput.files[0]; 
-            
-            if (!file) {
-                alert("マット画像が選択されていません。");
+            const file = fileInput.files[0];
+
+            let dataUrl;
+            if (pathValue) {
+                dataUrl = pathValue;
+            } else if (file) {
+                dataUrl = "images/mats/" + file.name;
+            } else {
+                alert("画像URL（相対パス）を入力するか、マット画像を選択してください。");
                 return;
             }
 
             try {
-            // Base64変換をやめ、「images/mats/ファイル名」という短いテキストを作成します
-            const dataUrl = "images/mats/" + file.name;
             const newMat = { id: Date.now().toString(), name, imageUrl: dataUrl };
                 
                 state.mats.push(newMat);
@@ -612,12 +617,22 @@ function applyArtTransform() {
 async function handleFrameSubmit(e) {
     e.preventDefault();
 
+    // パス入力欄を優先し、空ならファイル選択からファイル名を採用
+    const pathInput = document.getElementById('frame-image-path');
+    const pathValue = pathInput ? pathInput.value.trim() : '';
     const file = els.frameImageInput.files[0];
-    if (!file) return;
+
+    let dataUrl;
+    if (pathValue) {
+        dataUrl = pathValue;
+    } else if (file) {
+        dataUrl = "images/frames/" + file.name;
+    } else {
+        alert('画像URL（相対パス）を入力するか、ファイルを選択してください。');
+        return;
+    }
 
     try {
-    // こちらもパスの保存に変更します
-    const dataUrl = "images/frames/" + file.name;
     const newFrame = {
             id: 'frame_' + Date.now(),
             name: document.getElementById('frame-name').value,
@@ -687,11 +702,30 @@ function renderRegisteredList() {
                 <h4>${frame.name}</h4>
                 <div class="registered-tags">${frame.texture}</div>
                 <p class="registered-dims">外寸: ${frame.outerWidth}x${frame.outerHeight}mm | 内寸: ${frame.innerWidth}x${frame.innerHeight}mm</p>
+                <p class="registered-path" style="font-size:0.7rem; color:var(--text-secondary); word-break:break-all; margin:4px 0 0;">パス: ${frame.imageUrl}</p>
             </div>
-            <button class="delete-btn" onclick="deleteFrame('${frame.id}')">削除</button>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <button onclick="editFramePath('${frame.id}')" class="secondary-btn" style="padding:4px 8px; font-size:0.75rem;">URL/パス変更</button>
+                <button class="delete-btn" onclick="deleteFrame('${frame.id}')">削除</button>
+            </div>
         `;
         els.registeredFramesList.appendChild(item);
     });
+}
+
+function editFramePath(id) {
+    const frame = state.frames.find(f => f.id === id);
+    if (!frame) return;
+    const newPath = prompt("新しい画像URL（相対パス）を入力してください:", frame.imageUrl);
+    if (newPath && newPath.trim() !== '') {
+        frame.imageUrl = newPath.trim();
+        saveFramesToStorage();
+        renderRegisteredList();
+        renderSimulatorFrameList();
+        if (state.selectedFrameId === id) {
+            updateCompositionCanvas();
+        }
+    }
 }
 
 function updateTextureFilterOptions() {
@@ -1311,15 +1345,31 @@ function renderAdminMatList() {
       <img src="${mat.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
       <div class="registered-info" style="flex:1;">
         <h4 style="margin: 0 0 4px 0;">${mat.name}</h4>
+        <p class="registered-path" style="font-size:0.7rem; color:var(--text-secondary); word-break:break-all; margin:0;">パス: ${mat.imageUrl}</p>
       </div>
       <div style="display:flex; flex-direction:column; gap:6px;">
         <button onclick="editMatName('${mat.id}')" class="secondary-btn" style="padding:4px 8px; font-size:0.75rem;">名前編集</button>
+        <button onclick="editMatPath('${mat.id}')" class="secondary-btn" style="padding:4px 8px; font-size:0.75rem;">URL/パス変更</button>
         <button onclick="editMatImage('${mat.id}')" class="secondary-btn" style="padding:4px 8px; font-size:0.75rem;">画像変更</button>
         <button onclick="deleteMat('${mat.id}')" class="delete-btn" style="padding:4px 8px; font-size:0.75rem;">削除</button>
       </div>
     `;
     list.appendChild(item);
   });
+}
+
+// 編集機能：URL/パスを直接書き換える
+function editMatPath(id) {
+  const mat = state.mats.find(m => m.id === id);
+  if (!mat) return;
+  const newPath = prompt("新しい画像URL（相対パス）を入力してください:", mat.imageUrl);
+  if (newPath && newPath.trim() !== '') {
+    mat.imageUrl = newPath.trim();
+    saveMatsToStorage();
+    renderAdminMatList();
+    renderSimulatorMatList();
+    updateCompositionCanvas();
+  }
 }
 
 // 編集機能：名前の変更
@@ -1340,11 +1390,14 @@ function editMatImage(id) {
   input.type = 'file';
   input.accept = 'image/*';
     input.onchange = async (e) => {
-    if (e.target.files) {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
         const mat = state.mats.find(m => m.id === id);
-        mat.imageUrl = "images/mats/" + e.target.files.name;
+        if (!mat) return;
+        mat.imageUrl = "images/mats/" + file.name;
         saveMatsToStorage();
       renderAdminMatList();
+      renderSimulatorMatList();
       updateCompositionCanvas(); // シミュレーター画面も即時更新
     }
   };
