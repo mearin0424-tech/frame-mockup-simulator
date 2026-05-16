@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>フレームモックアップシミュレーター</title>
+    <meta name="description" content="アート作品を実際の寸法で視覚化する、プレミアムなフレームモックアップシミュレーター。">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>ArtFrame<span>Sim</span></h2>
+            </div>
+
+            <nav class="main-nav">
+                <button id="nav-simulator" class="nav-btn active">シミュレーター</button>
+                <button id="nav-gallery" class="nav-btn">保存済みデザイン</button>
+                <button id="nav-admin" class="nav-btn">フレーム・マット管理</button>
+            </nav>
+
+            <div id="sidebar-simulator-content" class="sidebar-content">
+                <div class="control-group">
+                    <label>質感でフィルター</label>
+                    <select id="frame-texture-filter">
+                        <option value="">すべてのテクスチャ</option>
+                        </select>
+                </div>
+
+                <div class="control-group hidden" id="art-controls">
+                    <label>アートの調整</label>
+
+                    <div class="control-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 0.85rem;">マットの色 (背景)</label>
+                        <div id="mat-selector" class="mat-list-grid">
+                        </div>
+                     </div>
+                    <div class="control-group" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                        <label for="mat-core-color-picker" style="font-size: 0.85rem; margin-bottom: 0;">芯材 (断面) の色</label>
+                        <div class="color-picker-container">
+                            <input type="color" id="mat-core-color-picker" value="#ffffff">
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                            <span>ズーム</span>
+                            <span id="art-scale-val">100%</span>
+                        </div>
+                        <input type="range" id="art-scale" min="10" max="300" value="100">
+                    </div>
+
+                    <button id="btn-center-art" class="secondary-btn"
+                        style="width: 100%; margin-top: 12px; justify-content: center; font-size: 0.85rem; padding: 8px;">
+                        <span class="icon">🎯</span> 中央に配置
+                    </button>
+
+                    <small
+                        style="color:var(--text-secondary); font-size: 0.75rem; display: block; margin-top: 12px;">ヒント:
+                        キャンバス上のアートをドラッグして位置を移動できます。</small>
+                </div>
+
+                <div class="control-group">
+                    <label>フレームを選択</label>
+                    <div id="frame-selector-list" class="frame-list">
+                        <div class="empty-state-small">フレームが見つかりません。<br>「フレーム管理」から追加してください。</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sidebar-gallery-content" class="sidebar-content hidden">
+                <p class="help-text">ブラウザ内に安全に保存された、あなたのモックアップデザインと調整設定を確認できます。</p>
+            </div>
+
+            <div id="sidebar-admin-content" class="sidebar-content hidden">
+                <p class="help-text">アートの拡大縮小を正確に行うため、正確な外寸を指定して新しいフレームを追加します。</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <section id="view-simulator" class="view-section active">
+                <header class="view-header">
+                    <h1>モックアップシミュレーター</h1>
+                    <div class="header-actions">
+                        <div class="art-upload-wrapper">
+                            <label for="art-upload" class="primary-btn">アートをアップロード</label>
+                            <input type="file" id="art-upload" accept="image/*" class="hidden-input">
+                        </div>
+                        <button id="btn-save-design" class="secondary-btn hidden">
+                            <span class="icon">💾</span> デザインを保存
+                        </button>
+                    </div>
+                </header>
+
+                <div class="canvas-container" id="simulation-canvas-wrapper">
+                    <div class="empty-state" id="simulator-empty-state">
+                        <span class="icon">🖼️</span>
+                        <h3>シミュレーションの準備完了</h3>
+                        <p>アートをアップロードし、サイドバーからフレームを選択してください。</p>
+                    </div>
+
+                    <div id="mockup-composition" class="hidden">
+                        <div id="layer-art-container" class="layer-art">
+                            <img id="layer-art-img" src="" alt="アップロードされたアート">
+                        </div>
+
+                        <img id="layer-frame-img" class="layer-frame" src="" alt="フレーム">
+                    </div>
+                </div>
+
+                <div class="simulation-info hidden" id="simulation-info-panel">
+                    <div class="info-stat">
+                        <span class="label">外寸サイズ</span>
+                        <span class="value" id="info-outer-dim">-</span>
+                    </div>
+                    <div class="info-stat">
+                        <span class="label">内寸サイズ (窓枠)</span>
+                        <span class="value" id="info-inner-dim">-</span>
+                    </div>
+                    <div class="info-stat">
+                        <span class="label">アート倍率</span>
+                        <span class="value" id="info-scale-ratio">-</span>
+                    </div>
+                    <div class="info-stat">
+                        <span class="label">解像度 (PPI)</span>
+                        <span class="value" id="info-ppi">-</span>
+                    </div>
+                    <div class="info-stat">
+                        <span class="label">座標位置 (X,Y)</span>
+                        <span class="value" id="info-position">-</span>
+                    </div>
+                    <div class="info-stat">
+                        <span class="label">アートサイズ</span>
+                        <span class="value" id="info-art-size">-</span>
+                    </div>
+                    <div class="info-stat" style="display: flex; align-items: center; justify-content: center;">
+                        <button id="btn-refresh-info" class="secondary-btn"
+                            style="padding: 6px 12px; font-size: 0.8rem;">
+                            <span class="icon">🔄</span> 値を更新
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-gallery" class="view-section hidden">
+                <header class="view-header">
+                    <h1>保存済みデザイン</h1>
+                    <button id="btn-clear-gallery" class="secondary-btn"
+                        style="color: var(--error-color); border-color: rgba(227, 0, 0, 0.2);">
+                        <span class="icon">🗑️</span> すべて削除
+                    </button>
+                </header>
+
+                <div id="gallery-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+                    <div class="empty-state" style="grid-column: 1 / -1; margin-top: 40px;">
+                        <span class="icon">🗂️</span>
+                        <h3>保存されたデザインはありません</h3>
+                        <p>シミュレーションを行い、「デザインを保存」をクリックするとここに表示されます。</p>
+                    </div>
+                </div>
+
+                <div id="gallery-modal" class="hidden"
+                    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 40px;">
+                    <div
+                        style="background: white; border-radius: 12px; width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+                        <div
+                            style="padding: 16px 24px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="margin:0; font-size: 1.2rem;">デザインの詳細</h2>
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <button id="btn-delete-design" class="secondary-btn"
+                                    style="color: var(--error-color); border-color: rgba(227, 0, 0, 0.2); padding: 4px 12px; font-size: 0.8rem;">
+                                    <span class="icon">🗑️</span> デザインを削除
+                                </button>
+                                <button id="btn-close-modal"
+                                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                            </div>
+                        </div>
+                        <div style="padding: 24px; overflow-y: auto; display: flex; gap: 24px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 300px;">
+                                <h3>フルモックアップ</h3>
+                                <img id="modal-img-mockup" src=""
+                                    style="width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-top: 8px;">
+                                <small style="display:block; text-align:center; margin-top:4px;">右クリックで画像を保存</small>
+                            </div>
+                            <div style="flex: 1; min-width: 300px;">
+                                <h3>調整済みアート抽出</h3>
+                                <img id="modal-img-art" src=""
+                                    style="width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-top: 8px;">
+                                <small style="display:block; text-align:center; margin-top:4px;">右クリックで画像を保存</small>
+                            </div>
+                            <div style="flex: 100%;">
+                                <h3>メタデータ</h3>
+                                <pre id="modal-text-metadata"
+                                    style="background: #f5f5f7; padding: 16px; border-radius: 8px; font-size: 0.9rem; overflow-x: auto; margin-top: 8px;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-admin" class="view-section hidden">
+                <header class="view-header">
+                    <h1>フレーム・マット管理</h1>
+                </header>
+
+                <div class="admin-grid">
+                    <div class="card list-card">
+                        <h3>登録済みフレーム <small>(共有レジストリ)</small></h3>
+                        <div id="registered-frames-list" class="registered-list">
+                            </div>
+
+                        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+                        <div style="display: flex; gap: 12px;">
+                            <button id="btn-download-registry" class="secondary-btn full-width" style="justify-content: center;">
+                            <span class="icon">⬇️</span> エクスポート(DL)
+                            </button>
+                            <!-- ▼追加: インポート用のボタンと隠しファイル入力▼ -->
+                            <label for="import-registry" class="secondary-btn full-width" style="justify-content: center; cursor: pointer; text-align: center; margin: 0;">
+                            <span class="icon">⬆️</span> インポート(読込)
+                            </label>
+                            <input type="file" id="import-registry" accept=".json" class="hidden-input">
+                        </div>
+                        <small class="hint" style="display: block; margin-top: 8px; text-align: center;">jsonファイルをダウンロードしてバックアップしたり、外部のjsonを読み込んで一括登録できます。</small>
+                        </div>
+                    </div>
+                    <div class="card form-card">
+                        <h3>新規フレームの追加</h3>
+                        <form id="add-frame-form">
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label for="frame-name">デザイン名</label>
+                                    <input type="text" id="frame-name" required placeholder="例: クラシック・オーク 500x500">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="frame-texture">テクスチャタグ</label>
+                                    <input type="text" id="frame-texture" required
+                                        placeholder="例: 木製, 金属, マット">
+                                </div>
+                            </div>
+
+                            <fieldset class="dimension-fieldset">
+                                <legend>外寸 (mm)</legend>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="outer-width">幅 (mm)</label>
+                                        <input type="number" id="outer-width" required min="10" placeholder="例: 500">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="outer-height">高さ (mm)</label>
+                                        <input type="number" id="outer-height" required min="10"
+                                            placeholder="例: 700">
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="dimension-fieldset">
+                                <legend>内寸 (窓枠) (mm)</legend>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="inner-width">幅 (mm)</label>
+                                        <input type="number" id="inner-width" required min="5" placeholder="例: 400">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inner-height">高さ (mm)</label>
+                                        <input type="number" id="inner-height" required min="5" placeholder="例: 600">
+                                    </div>
+                                </div>
+                                <small class="hint">アートが表示される透明な窓の部分のサイズです。</small>
+                            </fieldset>
+
+                            <div class="form-row">
+                                <div class="form-group full-width border-dashed">
+                                    <label for="frame-image" class="file-drop-label">
+                                        <span class="upload-icon">📁</span>
+                                        <span>透過フレーム(PNG)をアップロード</span>
+                                        <small>内側が透明に切り抜かれている必要があります。</small>
+                                    </label>
+                                    <input type="file" id="frame-image" accept="image/png" required
+                                        class="hidden-input">
+                                    <div id="frame-image-preview-name" class="file-name-preview"></div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="primary-btn full-width submit-btn">フレームを登録する</button>
+                        </form>
+                    </div>
+                    <div class="card list-card">
+                        <h3>登録済みマット</h3>
+                        <div id="registered-mats-list" class="registered-list">
+                        <!-- ここに登録したマット一覧と編集ボタンがJSで追加されます -->
+                        </div>
+                        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+                        <div style="display: flex; gap: 12px;">
+                            <button id="btn-download-mats" class="secondary-btn full-width" style="justify-content: center;">
+                            <span class="icon">⬇️</span> エクスポート(DL)
+                            </button>
+                            <label for="import-mats" class="secondary-btn full-width" style="justify-content: center; cursor: pointer; text-align: center; margin: 0;">
+                            <span class="icon">⬆️</span> インポート(読込)
+                            </label>
+                            <input type="file" id="import-mats" accept=".json" class="hidden-input">
+                        </div>
+                        <small class="hint" style="display: block; margin-top: 8px; text-align: center;">jsonファイルをダウンロードしてバックアップしたり、外部のjsonを読み込んで一括登録できます。</small>
+                        </div>
+                    </div>
+                    <div class="card form-card">
+                        <h3>マット（画像）の追加</h3>
+                        <form id="add-mat-form">
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                            <label for="mat-name">マット名</label>
+                            <input type="text" id="mat-name" required placeholder="例: キャンバス生地、和紙など">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group full-width border-dashed">
+                            <label for="mat-image" class="file-drop-label">
+                                <span class="upload-icon">🖼️</span>
+                                <span>マット画像をアップロード</span>
+                            </label>
+                            <input type="file" id="mat-image" accept="image/*" required class="hidden-input">
+                            </div>
+                        </div>
+                        <button type="submit" class="primary-btn full-width submit-btn">マットを登録する</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js?v=2"></script>
+</body>
+
+</html>
