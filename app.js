@@ -367,13 +367,16 @@ function setupEventListeners() {
 
             // パス入力欄を優先し、空ならファイル選択を使う
             const pathInput = document.getElementById('mat-image-path');
-            const pathValue = pathInput ? pathInput.value.trim() : '';
+            const rawPath = pathInput ? pathInput.value.trim() : '';
+            // 「images/mats/」だけが残っている = 実質未入力扱いにする
+            const pathValue = (rawPath === '' || rawPath === 'images/mats/' || rawPath === 'images/mats') ? '' : rawPath;
             const fileInput = document.getElementById('mat-image');
             const file = fileInput.files[0];
 
             let dataUrl;
             if (pathValue) {
-                dataUrl = pathValue;
+                // ファイル名だけ入力された場合（スラッシュなし）はデフォルトフォルダを補完
+                dataUrl = pathValue.includes('/') ? pathValue : 'images/mats/' + pathValue;
             } else if (file) {
                 dataUrl = "images/mats/" + file.name;
             } else {
@@ -396,6 +399,7 @@ function setupEventListeners() {
                 alert(`マット「${name}」を登録しました。`);
                 
                 addMatForm.reset();
+                if (pathInput) pathInput.value = 'images/mats/';
                 updateCompositionCanvas();
                 
             } catch (error) {
@@ -619,12 +623,15 @@ async function handleFrameSubmit(e) {
 
     // パス入力欄を優先し、空ならファイル選択からファイル名を採用
     const pathInput = document.getElementById('frame-image-path');
-    const pathValue = pathInput ? pathInput.value.trim() : '';
+    const rawPath = pathInput ? pathInput.value.trim() : '';
+    // 「images/frames/」だけが残っている = 実質未入力扱いにする
+    const pathValue = (rawPath === '' || rawPath === 'images/frames/' || rawPath === 'images/frames') ? '' : rawPath;
     const file = els.frameImageInput.files[0];
 
     let dataUrl;
     if (pathValue) {
-        dataUrl = pathValue;
+        // ファイル名だけ入力された場合（スラッシュなし）はデフォルトフォルダを補完
+        dataUrl = pathValue.includes('/') ? pathValue : 'images/frames/' + pathValue;
     } else if (file) {
         dataUrl = "images/frames/" + file.name;
     } else {
@@ -653,6 +660,7 @@ async function handleFrameSubmit(e) {
         saveFramesToStorage();
 
         els.addFrameForm.reset();
+        if (pathInput) pathInput.value = 'images/frames/';
         els.frameImagePreviewName.textContent = '';
 
         renderRegisteredList();
